@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>护理排班日历</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            padding-bottom: 30px;
+            color: #333;
+        }
+
+        /* === Layout Utilities === */
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .flex-wrap { flex-wrap: wrap; }
+        .flex-1 { flex: 1; }
+        .flex-shrink-0 { flex-shrink: 0; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-1 { gap: 4px; }
+        .gap-2 { gap: 8px; }
+        .gap-3 { gap: 12px; }
+        .gap-4 { gap: 16px; }
+        .gap-5 { gap: 20px; }
+        .text-center { text-align: center; }
+        .grid-7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .hidden { display: none !important; }
+        .block { display: block; }
+
+        /* === Text === */
+        .text-xs { font-size: 11px; }
+        .text-sm { font-size: 13px; }
+        .text-base { font-size: 15px; }
+        .text-lg { font-size: 18px; }
+        .text-xl { font-size: 20px; }
+        .text-2xl { font-size: 24px; }
+        .text-5xl { font-size: 42px; }
+        .font-medium { font-weight: 500; }
+        .font-bold { font-weight: 700; }
+        .font-extrabold { font-weight: 800; }
+        .leading-none { line-height: 1; }
+        .leading-relaxed { line-height: 1.6; }
+        .opacity-50 { opacity: 0.5; }
+        .opacity-60 { opacity: 0.6; }
+        .opacity-80 { opacity: 0.8; }
+
+        /* === Colors === */
+        .c-white { color: #fff; }
+        .c-gray400 { color: #9ca3af; }
+        .c-gray500 { color: #6b7280; }
+        .c-gray600 { color: #4b5563; }
+        .c-gray700 { color: #374151; }
+        .c-gray800 { color: #1f2937; }
+        .c-blue500 { color: #3b82f6; }
+        .c-green700 { color: #15803d; }
+        .c-indigo700 { color: #4338ca; }
+        .c-red400 { color: #f87171; }
+
+        /* === Spacing === */
+        .mt-05 { margin-top: 2px; }
+        .mt-1 { margin-top: 4px; }
+        .mt-15 { margin-top: 6px; }
+        .mt-2 { margin-top: 8px; }
+        .mt-3 { margin-top: 12px; }
+        .mt-4 { margin-top: 16px; }
+        .mt-5 { margin-top: 20px; }
+        .mb-1 { margin-bottom: 4px; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-3 { margin-bottom: 12px; }
+        .mb-4 { margin-bottom: 16px; }
+        .mb-5 { margin-bottom: 20px; }
+        .px-1 { padding-left: 4px; padding-right: 4px; }
+        .px-2 { padding-left: 8px; padding-right: 8px; }
+        .px-3 { padding-left: 12px; padding-right: 12px; }
+        .px-4 { padding-left: 16px; padding-right: 16px; }
+        .py-05 { padding-top: 2px; padding-bottom: 2px; }
+        .py-1 { padding-top: 4px; padding-bottom: 4px; }
+        .py-15 { padding-top: 6px; padding-bottom: 6px; }
+        .py-2 { padding-top: 8px; padding-bottom: 8px; }
+        .py-8 { padding-top: 32px; padding-bottom: 32px; }
+        .p-2 { padding: 8px; }
+        .p-3 { padding: 12px; }
+
+        /* === Backgrounds === */
+        .bg-gray100 { background: #f3f4f6; }
+        .bg-blue50 { background: #eff6ff; }
+        .bg-green50 { background: #f0fdf4; }
+        .bg-indigo50 { background: #eef2ff; }
+        .bg-red50 { background: #fef2f2; }
+        .bg-white20 { background: rgba(255,255,255,0.2); }
+
+        /* === Border & Radius === */
+        .rounded-lg { border-radius: 8px; }
+        .rounded-xl { border-radius: 12px; }
+        .rounded-full { border-radius: 9999px; }
+        .border { border: 1px solid #e5e7eb; }
+        .border-green200 { border-color: #bbf7d0; }
+        .border-indigo200 { border-color: #c7d2fe; }
+        .border-gray200 { border-color: #e5e7eb; }
+
+        /* === Header === */
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 16px 20px 20px;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 15px rgba(79,172,254,0.3);
+        }
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(4px);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* === Status Card === */
+        .status-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin: -10px 16px 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            position: relative;
+            z-index: 2;
+        }
+        .status-divider {
+            border-top: 1px solid #f0f0f0;
+            margin-top: 12px;
+            padding-top: 12px;
+        }
+
+        /* === Calendar === */
+        .calendar-container {
+            background: white;
+            border-radius: 16px;
+            margin: 0 16px 12px;
+            padding: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .cal-divider { border-top: 1px solid #f0f0f0; margin-top: 12px; padding-top: 8px; }
+        .nav-btn {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: #f3f4f6; border-radius: 50%;
+            border: none; cursor: pointer;
+            font-size: 18px; color: #4b5563;
+        }
+        .weekday-header {
+            font-size: 11px; font-weight: 500;
+            color: #9ca3af; padding: 4px 0;
+            text-align: center;
+        }
+
+        /* === Day Cell === */
+        .day-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            font-size: 14px;
+        }
+        .day-cell:active { transform: scale(0.92); }
+        .day-work {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            color: #2e7d32; font-weight: 600;
+            border: 1.5px solid #a5d6a7;
+        }
+        .day-night {
+            background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+            color: #1e40af; font-weight: 600;
+            border: 1.5px solid #60a5fa;
+        }
+        .day-rest {
+            background: linear-gradient(135deg, #e0d4f5, #d1c4e9);
+            color: #5b4a73; font-weight: 600;
+            border: 1.5px solid #b39ddb;
+        }
+        .day-today { box-shadow: 0 0 0 2.5px #4facfe; }
+        .day-other { color: #ccc; background: transparent; }
+        .note-dot {
+            width: 6px; height: 6px;
+            background: #ff6b6b; border-radius: 50%;
+            position: absolute; bottom: 3px;
+        }
+        .note-dot-work { background: #2e7d32; }
+        .note-dot-night { background: #60a5fa; }
+        .note-dot-rest { background: #b39ddb; }
+
+        /* === Legend === */
+        .legend-dot {
+            width: 12px; height: 12px;
+            border-radius: 4px; display: inline-block;
+        }
+
+        /* === Section Card === */
+        .section-card {
+            background: white; border-radius: 16px;
+            margin: 0 16px 12px; padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+
+        /* === Note Items === */
+        .note-item {
+            padding: 12px; background: #f8f9fa;
+            border-radius: 10px; margin-bottom: 8px;
+            border-left: 3px solid #4facfe;
+            cursor: pointer;
+        }
+        .note-item:active { opacity: 0.7; }
+        .note-item-work { border-left-color: #2e7d32; }
+        .note-item-night { border-left-color: #60a5fa; }
+        .note-item-rest { border-left-color: #b39ddb; }
+
+        /* === Tags === */
+        .tag {
+            font-size: 11px; padding: 2px 6px;
+            border-radius: 6px; margin-left: 8px;
+            display: inline-block;
+        }
+        .tag-green { background: #dcfce7; color: #15803d; }
+        .tag-indigo { background: #bfdbfe; color: #1e40af; }
+        .tag-purple { background: #e0d4f5; color: #5b4a73; }
+        .tag-gray { background: #f3f4f6; color: #6b7280; }
+
+        /* === Buttons === */
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white; border: none; border-radius: 12px;
+            padding: 12px 24px; font-size: 16px;
+            font-weight: 600; cursor: pointer; width: 100%;
+        }
+        .btn-primary:active { opacity: 0.8; }
+        .btn-danger {
+            background: #fee2e2; color: #dc2626;
+            border: none; border-radius: 10px;
+            padding: 10px 16px; font-size: 14px; cursor: pointer;
+        }
+        .btn-blue {
+            color: #3b82f6; font-size: 13px; font-weight: 500;
+            padding: 4px 12px; background: #eff6ff;
+            border: none; border-radius: 8px; cursor: pointer;
+        }
+        .preset-btn {
+            padding: 8px 14px; background: #f0f4f8;
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-size: 13px; cursor: pointer; color: #475569;
+        }
+        .preset-btn:active { background: #4facfe; color: white; border-color: #4facfe; }
+        .phase-add-btn {
+            flex: 1; padding: 8px 0;
+            border-radius: 12px; font-size: 13px;
+            font-weight: 500; cursor: pointer; border: none;
+        }
+        .phase-add-green { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        .phase-add-indigo { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; }
+        .phase-add-gray { background: #f9fafb; color: #4b5563; border: 1px solid #e5e7eb; }
+
+        /* === Shift Type Buttons === */
+        .shift-type-btn {
+            padding: 6px 8px; border: 2px solid #e2e8f0;
+            border-radius: 10px; font-size: 11px;
+            font-weight: 600; cursor: pointer;
+            text-align: center; background: white;
+        }
+        .shift-type-btn.active-day {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-color: #66bb6a; color: #2e7d32;
+        }
+        .shift-type-btn.active-night {
+            background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+            border-color: #60a5fa; color: #1e40af;
+        }
+        .shift-type-btn.active-rest {
+            background: linear-gradient(135deg, #e0d4f5, #d1c4e9);
+            border-color: #b39ddb; color: #5b4a73;
+        }
+
+        /* === Phase Editor Row === */
+        .phase-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px; background: white;
+            border-radius: 12px; border: 1px solid #f3f4f6;
+        }
+        .phase-days-input {
+            flex: 1; text-align: center; font-weight: 700;
+            font-size: 14px; padding: 8px;
+            border: 1.5px solid #e5e7eb; border-radius: 8px;
+            outline: none; width: 100%;
+        }
+        .phase-days-input:focus { border-color: #4facfe; }
+        .phase-remove-btn {
+            width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            color: #f87171; background: #fef2f2;
+            border-radius: 8px; border: none;
+            cursor: pointer; font-size: 13px; flex-shrink: 0;
+        }
+
+        /* === Shift Sequence Preview === */
+        .shift-sequence {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            padding: 12px; background: #f8f9fa;
+            border-radius: 12px; min-height: 44px; align-items: center;
+        }
+        .shift-seq-item {
+            padding: 4px 10px; border-radius: 8px;
+            font-size: 12px; font-weight: 600;
+        }
+        .seq-day { background: #e8f5e9; color: #2e7d32; }
+        .seq-night { background: #bfdbfe; color: #1e40af; }
+        .seq-rest { background: #e0d4f5; color: #5b4a73; border: 1px solid #b39ddb; }
+
+        /* === Modal === */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); z-index: 100;
+            display: none; align-items: flex-end; justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: white; border-radius: 20px 20px 0 0;
+            padding: 24px 20px 34px; width: 100%;
+            max-width: 500px; max-height: 80vh; overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .modal-close {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            background: #f3f4f6; border-radius: 50%;
+            border: none; cursor: pointer; color: #6b7280; font-size: 14px;
+        }
+        .modal-label {
+            display: block; font-size: 13px;
+            font-weight: 500; color: #4b5563; margin-bottom: 8px;
+        }
+
+        /* === Inputs === */
+        input[type="date"], input[type="text"], input[type="number"], textarea {
+            width: 100%; padding: 12px 14px;
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-size: 15px; outline: none;
+            font-family: inherit; background: white;
+        }
+        input:focus, textarea:focus { border-color: #4facfe; }
+
+        /* === Countdown === */
+        .countdown-number {
+            font-size: 36px; font-weight: 800;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text; line-height: 1;
+        }
+        .countdown-working {
+            background: linear-gradient(135deg, #43a047, #66bb6a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .countdown-night {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* === Photo Section === */
+        .photo-section {
+            background: white; border-radius: 16px;
+            margin: 0 16px 12px; overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .photo-section img {
+            width: 100%; display: block;
+            max-height: 300px; object-fit: contain;
+            background: #f8f9fa;
+        }
+        .photo-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; border-bottom: 1px solid #f0f0f0;
+        }
+        .photo-section-header span { font-size: 13px; font-weight: 600; color: #374151; }
+        .photo-action-btn {
+            font-size: 12px; padding: 4px 10px;
+            border-radius: 8px; border: none; cursor: pointer;
+        }
+        .photo-view-btn { background: #eff6ff; color: #3b82f6; }
+        .photo-retake-btn { background: #fef2f2; color: #dc2626; }
+
+        /* === Camera Button === */
+        .camera-btn {
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; padding: 14px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 14px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            margin: 0 16px 12px; box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+        }
+        .camera-btn:active { opacity: 0.85; transform: scale(0.98); }
+
+        /* === Ref Image === */
+        .ref-image-container {
+            width: 50px; height: 50px; border-radius: 10px;
+            overflow: hidden; border: 2px solid rgba(255,255,255,0.3);
+            cursor: pointer; flex-shrink: 0;
+        }
+        .ref-image-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* === Image Overlay === */
+        .img-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); z-index: 200;
+            display: none; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .img-overlay.active { display: flex; }
+        .img-overlay img { max-width: 100%; max-height: 90vh; border-radius: 12px; }
+
+        /* === Tip Box === */
+        .tip-box {
+            padding: 12px; background: #eff6ff;
+            border-radius: 12px; margin-bottom: 20px;
+        }
+        .tip-box p { font-size: 13px; color: #1d4ed8; }
+    </style>
+</head>
+<body>
+
+    <!-- Camera Button -->
+    <button class="camera-btn" onclick="document.getElementById('imageInput').click()">
+        📷 拍照排班表
+    </button>
+
+    <!-- Photo Display Section -->
+    <div class="photo-section hidden" id="photoSection">
+        <div class="photo-section-header">
+            <span>📋 排班表照片</span>
+            <div class="flex gap-2">
+                <button class="photo-action-btn photo-view-btn" onclick="showFullImage()">🔍 查看大图</button>
+                <button class="photo-action-btn photo-retake-btn" onclick="document.getElementById('imageInput').click()">📷 重拍</button>
+            </div>
+        </div>
+        <img id="photoDisplay" src="" alt="排班表照片" onclick="showFullImage()">
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold">📋 护理排班日历</h1>
+                <p class="text-xs mt-1 opacity-80" id="todayInfo"></p>
+            </div>
+        </div>
+        <input type="file" id="imageInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(event)">
+    </div>
+
+    <!-- Status Card -->
+    <div class="status-card">
+        <div id="statusContent" class="text-center py-1"></div>
+        <div class="status-divider flex items-center justify-between">
+            <div class="flex items-center gap-2 text-sm c-gray500">
+                <span class="text-lg">🔄</span>
+                <span id="shiftPatternDisplay" class="c-gray700 font-medium">未设置排班</span>
+            </div>
+            <button class="btn-blue" onclick="openSettings()">⚙️ 设置排班</button>
+        </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="calendar-container">
+        <div class="flex items-center justify-between mb-3 px-1">
+            <button class="nav-btn" onclick="prevMonth()">‹</button>
+            <h2 id="monthTitle" class="text-lg font-bold c-gray800"></h2>
+            <button class="nav-btn" onclick="nextMonth()">›</button>
+        </div>
+        <div class="grid-7 mb-1">
+            <div class="weekday-header">日</div>
+            <div class="weekday-header">一</div>
+            <div class="weekday-header">二</div>
+            <div class="weekday-header">三</div>
+            <div class="weekday-header">四</div>
+            <div class="weekday-header">五</div>
+            <div class="weekday-header">六</div>
+        </div>
+        <div id="calendarGrid" class="grid-7"></div>
+        <div class="cal-divider flex items-center justify-center gap-4">
+            <div class="flex items-center gap-1 text-xs c-gray500">
+                <span class="legend-dot" style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border:1px solid #a5d6a7;"></span> 白班
+            </div>
+            <div class="flex items-center gap-1 text-xs c-gray500 hidden" id="legendNightWrap">
+                <span class="legend-dot" style="background:linear-gradient(135deg,#bfdbfe,#93c5fd);border:1px solid #60a5fa;"></span> 夜班
+            </div>
+            <div class="flex items-center gap-1 text-xs c-gray500">
+                <span class="legend-dot" style="background:linear-gradient(135deg,#e0d4f5,#d1c4e9);border:1px solid #b39ddb;"></span> 休息
+            </div>
+            <div class="flex items-center gap-1 text-xs c-gray500">
+                <span class="legend-dot" style="background:white;border:2.5px solid #4facfe;"></span> 今天
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Notes -->
+    <div class="section-card hidden" id="notesSection">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold c-gray800 text-base">📌 近期事项</h3>
+            <button class="btn-blue" onclick="openNoteModal()">+ 添加</button>
+        </div>
+        <div id="notesList"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div class="section-card text-center py-8" id="emptyState">
+        <div class="text-5xl mb-3">📅</div>
+        <h3 class="font-bold c-gray700 mb-2">开始设置您的排班</h3>
+        <p class="text-sm c-gray400 mb-5 px-4">设置排班模式后，日历将自动标记上班和休息日</p>
+        <button class="btn-primary" style="width:auto; padding:12px 32px;" onclick="openSettings()">⚙️ 设置排班模式</button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold c-gray800">⚙️ 排班设置</h3>
+                <button class="modal-close" onclick="closeSettings()">✕</button>
+            </div>
+
+            <div class="mb-4">
+                <label class="modal-label">常用排班模式（点击快选）</label>
+                <div class="flex flex-wrap gap-2" id="presetBtns">
+                    <button class="preset-btn" onclick="applyPreset('day',[1,1])">白1休1</button>
+                    <button class="preset-btn" onclick="applyPreset('day',[2,1])">白2休1</button>
+                    <button class="preset-btn" onclick="applyPreset('day',[2,2])">白2休2</button>
+                    <button class="preset-btn" onclick="applyPreset('day',[3,1])">白3休1</button>
+                    <button class="preset-btn" onclick="applyPreset('day',[3,2])">白3休2</button>
+                    <button class="preset-btn" onclick="applyPreset('day',[5,2])">白5休2</button>
+                    <button class="preset-btn" onclick="applyPreset('both',[3,2,2])">白3夜2休2</button>
+                    <button class="preset-btn" onclick="applyPreset('both',[2,2,3])">白2夜2休3</button>
+                    <button class="preset-btn" onclick="applyPreset('both',[3,2,3])">白3夜2休3</button>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="modal-label">自定义排班周期</label>
+                <p class="text-xs c-gray400 mb-3">依次设置每个阶段的类型和天数，构成一个完整循环</p>
+                <div id="shiftPhases" class="flex flex-col gap-2 mb-3"></div>
+                <div class="flex gap-2">
+                    <button class="phase-add-btn phase-add-green" onclick="addPhase('work')">+ 白班</button>
+                    <button class="phase-add-btn phase-add-indigo" onclick="addPhase('night')">+ 夜班</button>
+                    <button class="phase-add-btn phase-add-gray" onclick="addPhase('rest')">+ 休息</button>
+                </div>
+                <div class="mt-3">
+                    <div class="text-xs c-gray400 mb-1">当前周期预览：</div>
+                    <div class="shift-sequence" id="shiftPreview"></div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="modal-label">排班起始日期（该日开始第一个阶段）</label>
+                <input type="date" id="shiftStartDate">
+            </div>
+
+            <div class="tip-box">
+                <p><strong>💡 提示：</strong>对照上传的排班表，设置好班次周期和起始日期，系统会自动计算每天的班次。</p>
+            </div>
+
+            <div class="flex gap-2">
+                <button class="btn-danger flex-shrink-0" onclick="resetShift()">重置</button>
+                <button class="btn-primary flex-1" onclick="saveSettings()">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div class="modal-overlay" id="noteModal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold c-gray800" id="noteModalTitle">📝 添加事项</h3>
+                <button class="modal-close" onclick="closeNoteModal()">✕</button>
+            </div>
+            <div class="mb-4">
+                <label class="modal-label">日期</label>
+                <input type="date" id="noteDate">
+            </div>
+            <div class="mb-4">
+                <label class="modal-label">事项内容</label>
+                <textarea id="noteContent" rows="3" placeholder="记录重要事项，如交接班、培训、会议等..."></textarea>
+            </div>
+            <div class="flex gap-2">
+                <button class="btn-danger flex-shrink-0 hidden" id="deleteNoteBtn" onclick="deleteNote()">删除</button>
+                <button class="btn-primary flex-1" onclick="saveNote()">保存事项</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Image Overlay -->
+    <div class="img-overlay" id="imageOverlay" onclick="hideFullImage()">
+        <img id="fullImage" src="" alt="排班表全图">
+    </div>
+
+    <script>
+    // ============ State ============
+    let state = {
+        currentYear: new Date().getFullYear(),
+        currentMonth: new Date().getMonth(),
+        shiftPhases: null,
+        shiftStartDate: null,
+        scheduleData: null, // 导入的具体排班数据
+        notes: {},
+        refImage: null
+    };
+
+    // 唐郗9月排班数据（女病区）
+    const defaultScheduleData = {
+        name: '唐郗',
+        department: '女病区',
+        month: 9,
+        year: 2026,
+        days: {
+            '2026-09-01': 'rest',
+            '2026-09-02': 'rest',
+            '2026-09-03': 'work',
+            '2026-09-04': 'night',
+            '2026-09-05': 'rest',
+            '2026-09-06': 'work',
+            '2026-09-07': 'night',
+            '2026-09-08': 'rest',
+            '2026-09-09': 'rest',
+            '2026-09-10': 'work',
+            '2026-09-11': 'night',
+            '2026-09-12': 'rest',
+            '2026-09-13': 'work',
+            '2026-09-14': 'night',
+            '2026-09-15': 'rest',
+            '2026-09-16': 'rest',
+            '2026-09-17': 'work',
+            '2026-09-18': 'night',
+            '2026-09-19': 'rest',
+            '2026-09-20': 'work',
+            '2026-09-21': 'night',
+            '2026-09-22': 'rest',
+            '2026-09-23': 'rest',
+            '2026-09-24': 'work',
+            '2026-09-25': 'night',
+            '2026-09-26': 'rest',
+            '2026-09-27': 'work',
+            '2026-09-28': 'night',
+            '2026-09-29': 'rest',
+            '2026-09-30': 'rest'
+        }
+    };
+
+    // ============ Persistence ============
+    function loadState() {
+        try {
+            const saved = localStorage.getItem('nursing_calendar_v3');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                state = { ...state, ...parsed };
+            }
+        } catch(e) { console.error('Load error:', e); }
+    }
+
+    function saveState() {
+        try {
+            localStorage.setItem('nursing_calendar_v3', JSON.stringify(state));
+        } catch(e) {
+            if (e.name === 'QuotaExceededError') {
+                alert('存储空间不足，请尝试上传较小的图片');
+                state.refImage = null;
+                localStorage.setItem('nursing_calendar_v3', JSON.stringify(state));
+            }
+        }
+    }
+
+    // ============ Shift Logic ============
+    function getDayStatus(dateStr) {
+        // 优先使用导入的排班数据
+        if (state.scheduleData && state.scheduleData.days && state.scheduleData.days[dateStr]) {
+            return state.scheduleData.days[dateStr];
+        }
+        // 否则使用模式计算
+        if (!state.shiftPhases || !state.shiftStartDate) return null;
+        const cycleLen = state.shiftPhases.reduce((a, p) => a + p.days, 0);
+        if (cycleLen === 0) return null;
+        const target = new Date(dateStr + 'T00:00:00');
+        const start = new Date(state.shiftStartDate + 'T00:00:00');
+        const diff = Math.floor((target - start) / 86400000);
+        let pos = diff % cycleLen;
+        if (pos < 0) pos += cycleLen;
+        let acc = 0;
+        for (const phase of state.shiftPhases) {
+            acc += phase.days;
+            if (pos < acc) return phase.type;
+        }
+        return state.shiftPhases[0].type;
+    }
+
+    function isWorkDay(dateStr) {
+        const s = getDayStatus(dateStr);
+        return s === 'work' || s === 'night';
+    }
+
+    function getNextWorkDay() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        for (let i = 0; i < 366; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() + i);
+            const ds = formatDateStr(d);
+            if (isWorkDay(ds)) return { days: i, date: d, type: getDayStatus(ds) };
+        }
+        return null;
+    }
+
+    function getPatternDescription() {
+        // 如果有导入的排班数据，显示人员信息
+        if (state.scheduleData && state.scheduleData.name) {
+            return state.scheduleData.name + '（' + (state.scheduleData.department || '') + '）';
+        }
+        if (!state.shiftPhases || state.shiftPhases.length === 0) return '未设置排班';
+        const typeNames = { work: '白', night: '夜', rest: '休' };
+        return state.shiftPhases.map(p => (typeNames[p.type] || p.type) + p.days).join(' ');
+    }
+
+    // ============ Date Helpers ============
+    function formatDateStr(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+    }
+
+    function isToday(dateStr) {
+        return dateStr === formatDateStr(new Date());
+    }
+
+    const weekNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ============ Render ============
+    function render() {
+        renderHeader();
+        renderStatus();
+        renderCalendar();
+        renderNotes();
+        renderEmptyState();
+        updateLegend();
+    }
+
+    function renderHeader() {
+        var today = new Date();
+        var opts = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        document.getElementById('todayInfo').textContent = today.toLocaleDateString('zh-CN', opts);
+
+        var photoSection = document.getElementById('photoSection');
+        var photoDisplay = document.getElementById('photoDisplay');
+        var cameraBtn = document.querySelector('.camera-btn');
+        if (state.refImage) {
+            photoDisplay.src = state.refImage;
+            photoSection.classList.remove('hidden');
+            cameraBtn.textContent = '📷 重新拍照';
+        } else {
+            photoSection.classList.add('hidden');
+            cameraBtn.innerHTML = '📷 拍照排班表';
+        }
+    }
+
+    function renderStatus() {
+        var el = document.getElementById('statusContent');
+        var patternEl = document.getElementById('shiftPatternDisplay');
+        patternEl.textContent = getPatternDescription();
+
+        if (!state.shiftPhases) {
+            el.innerHTML = '<div class="c-gray400 text-sm py-2">请先设置排班模式以查看上班状态</div>';
+            return;
+        }
+
+        var todayStr = formatDateStr(new Date());
+        var todayStatus = getDayStatus(todayStr);
+        var nextWork = getNextWorkDay();
+
+        if (todayStatus === 'work') {
+            el.innerHTML = '<div class="flex items-center justify-center gap-3">' +
+                '<div><div class="countdown-number countdown-working">白班中</div>' +
+                '<div class="text-sm c-gray500 mt-1">今天上白班 ☀️</div></div>' +
+                '<div class="text-5xl">💉</div></div>';
+        } else if (todayStatus === 'night') {
+            el.innerHTML = '<div class="flex items-center justify-center gap-3">' +
+                '<div><div class="countdown-number countdown-night">夜班中</div>' +
+                '<div class="text-sm c-gray500 mt-1">今天上夜班 🌙</div></div>' +
+                '<div class="text-5xl">🌙</div></div>';
+        } else if (todayStatus === 'rest') {
+            if (nextWork && nextWork.days > 0) {
+                var workDate = nextWork.date;
+                var weekDay = weekNames[workDate.getDay()];
+                var shiftLabel = nextWork.type === 'night' ? '夜班' : '白班';
+                var icon = nextWork.type === 'night' ? '🌙' : '⏰';
+                var cls = nextWork.type === 'night' ? 'countdown-night' : '';
+                el.innerHTML = '<div class="flex items-center justify-center gap-3">' +
+                    '<div><div class="countdown-number ' + cls + '">' + nextWork.days + '</div>' +
+                    '<div class="text-sm c-gray500 mt-1">天后上' + shiftLabel + ' · ' +
+                    (workDate.getMonth()+1) + '月' + workDate.getDate() + '日 周' + weekDay +
+                    '</div></div><div class="text-5xl">' + icon + '</div></div>';
+            } else {
+                el.innerHTML = '<div class="flex items-center justify-center gap-3">' +
+                    '<div><div class="countdown-number">休息中</div>' +
+                    '<div class="text-sm c-gray500 mt-1">今天休息 😊</div></div>' +
+                    '<div class="text-5xl">🏠</div></div>';
+            }
+        } else {
+            el.innerHTML = '<div class="c-gray400 text-sm py-2">请先设置排班模式</div>';
+        }
+    }
+
+    function renderCalendar() {
+        var year = state.currentYear;
+        var month = state.currentMonth;
+        document.getElementById('monthTitle').textContent = year + '年' + (month + 1) + '月';
+
+        var firstDay = new Date(year, month, 1).getDay();
+        var daysInMonth = new Date(year, month + 1, 0).getDate();
+        var prevMonthDays = new Date(year, month, 0).getDate();
+
+        var grid = document.getElementById('calendarGrid');
+        var html = '';
+
+        for (var i = firstDay - 1; i >= 0; i--) {
+            var d = prevMonthDays - i;
+            html += '<div class="day-cell day-other"><span>' + d + '</span></div>';
+        }
+
+        for (var d = 1; d <= daysInMonth; d++) {
+            var dateObj = new Date(year, month, d);
+            var dateStr = formatDateStr(dateObj);
+            var status = getDayStatus(dateStr);
+            var today = isToday(dateStr);
+            var hasNote = state.notes[dateStr];
+
+            var cls = 'day-cell';
+            if (status === 'work') cls += ' day-work';
+            else if (status === 'night') cls += ' day-night';
+            else if (status === 'rest') cls += ' day-rest';
+            if (today) cls += ' day-today';
+
+            var badge = '';
+            if (status === 'work') badge = '<span class="text-xs leading-none mt-05 opacity-60">白</span>';
+            else if (status === 'night') badge = '<span class="text-xs leading-none mt-05 opacity-60">夜</span>';
+            else if (status === 'rest') badge = '<span class="text-xs leading-none mt-05 opacity-50">休</span>';
+
+            var dot = '';
+            if (hasNote) {
+                var dotCls = '';
+                if (status === 'work') dotCls = 'note-dot-work';
+                else if (status === 'night') dotCls = 'note-dot-night';
+                else if (status === 'rest') dotCls = 'note-dot-rest';
+                dot = '<span class="note-dot ' + dotCls + '"></span>';
+            }
+
+            html += '<div class="' + cls + '" onclick="onDayClick(\'' + dateStr + '\')">' +
+                '<span class="text-sm leading-none">' + d + '</span>' +
+                badge + dot + '</div>';
+        }
+
+        var totalCells = firstDay + daysInMonth;
+        var remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+        for (var i = 1; i <= remaining; i++) {
+            html += '<div class="day-cell day-other"><span>' + i + '</span></div>';
+        }
+
+        grid.innerHTML = html;
+    }
+
+    function renderNotes() {
+        var section = document.getElementById('notesSection');
+        var list = document.getElementById('notesList');
+
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var upcoming = [];
+
+        Object.keys(state.notes).sort().forEach(function(dateStr) {
+            var d = new Date(dateStr + 'T00:00:00');
+            if (d >= new Date(today.getTime() - 86400000)) {
+                upcoming.push({ date: dateStr, content: state.notes[dateStr].content });
+            }
+        });
+
+        if (upcoming.length === 0) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        section.classList.remove('hidden');
+        var html = '';
+        upcoming.slice(0, 10).forEach(function(item) {
+            var d = new Date(item.date + 'T00:00:00');
+            var status = getDayStatus(item.date);
+            var statusTag = '';
+            if (status === 'work') statusTag = '<span class="tag tag-green">白班</span>';
+            else if (status === 'night') statusTag = '<span class="tag tag-indigo">夜班</span>';
+            else if (status === 'rest') statusTag = '<span class="tag tag-purple">休息</span>';
+
+            var diff = Math.floor((d - today) / 86400000);
+            var timeLabel = '';
+            if (diff === 0) timeLabel = '今天';
+            else if (diff === 1) timeLabel = '明天';
+            else if (diff > 1 && diff <= 7) timeLabel = diff + '天后';
+            else timeLabel = (d.getMonth()+1) + '月' + d.getDate() + '日';
+
+            var itemCls = '';
+            if (status === 'work') itemCls = 'note-item-work';
+            else if (status === 'night') itemCls = 'note-item-night';
+            else if (status === 'rest') itemCls = 'note-item-rest';
+
+            html += '<div class="note-item ' + itemCls + '" onclick="openNoteModal(\'' + item.date + '\')">' +
+                '<div class="flex items-center justify-between">' +
+                '<div class="flex items-center"><span class="font-bold c-gray800 text-sm">' + timeLabel + '</span>' +
+                statusTag + '</div>' +
+                '<span class="text-xs c-gray400">' + (d.getMonth()+1) + '/' + d.getDate() + ' 周' + weekNames[d.getDay()] + '</span>' +
+                '</div><div class="text-sm c-gray600 mt-15 leading-relaxed">' + escapeHtml(item.content) + '</div></div>';
+        });
+
+        list.innerHTML = html;
+    }
+
+    function renderEmptyState() {
+        var el = document.getElementById('emptyState');
+        if (state.shiftPhases) el.classList.add('hidden');
+        else el.classList.remove('hidden');
+    }
+
+    function updateLegend() {
+        var hasNight = state.shiftPhases && state.shiftPhases.some(function(p) { return p.type === 'night'; });
+        var el = document.getElementById('legendNightWrap');
+        if (hasNight) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+    }
+
+    // ============ Navigation ============
+    function prevMonth() {
+        state.currentMonth--;
+        if (state.currentMonth < 0) { state.currentMonth = 11; state.currentYear--; }
+        render();
+    }
+
+    function nextMonth() {
+        state.currentMonth++;
+        if (state.currentMonth > 11) { state.currentMonth = 0; state.currentYear++; }
+        render();
+    }
+
+    // ============ Image Upload ============
+    function handleImageUpload(event) {
+        var file = event.target.files[0];
+        if (!file) return;
+        if (file.size > 3 * 1024 * 1024) {
+            alert('图片过大，请选择3MB以下的图片');
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = new Image();
+            img.onload = function() {
+                var canvas = document.createElement('canvas');
+                var maxW = 800;
+                var w = img.width, h = img.height;
+                if (w > maxW) { h = (maxW / w) * h; w = maxW; }
+                canvas.width = w; canvas.height = h;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                state.refImage = canvas.toDataURL('image/jpeg', 0.7);
+                saveState(); render();
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function showFullImage() {
+        if (!state.refImage) return;
+        document.getElementById('fullImage').src = state.refImage;
+        document.getElementById('imageOverlay').classList.add('active');
+    }
+    function hideFullImage() {
+        document.getElementById('imageOverlay').classList.remove('active');
+    }
+
+    // ============ Settings Modal ============
+    var tempPhases = [];
+
+    function openSettings() {
+        document.getElementById('settingsModal').classList.add('active');
+        if (state.shiftPhases && state.shiftPhases.length > 0) {
+            tempPhases = JSON.parse(JSON.stringify(state.shiftPhases));
+        } else {
+            tempPhases = [{ type: 'work', days: 3 }, { type: 'rest', days: 2 }];
+        }
+        if (state.shiftStartDate) {
+            document.getElementById('shiftStartDate').value = state.shiftStartDate;
+        } else {
+            document.getElementById('shiftStartDate').value = formatDateStr(new Date());
+        }
+        renderPhasesEditor();
+    }
+    function closeSettings() {
+        document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function applyPreset(mode, pattern) {
+        tempPhases = [];
+        if (mode === 'day') {
+            tempPhases = [{ type: 'work', days: pattern[0] }, { type: 'rest', days: pattern[1] }];
+        } else if (mode === 'both') {
+            tempPhases = [
+                { type: 'work', days: pattern[0] },
+                { type: 'night', days: pattern[1] },
+                { type: 'rest', days: pattern[2] }
+            ];
+        }
+        renderPhasesEditor();
+    }
+
+    function addPhase(type) {
+        tempPhases.push({ type: type, days: 1 });
+        renderPhasesEditor();
+    }
+    function removePhase(idx) {
+        if (tempPhases.length <= 1) { alert('至少保留一个阶段'); return; }
+        tempPhases.splice(idx, 1);
+        renderPhasesEditor();
+    }
+    function updatePhaseType(idx, type) {
+        tempPhases[idx].type = type;
+        renderPhasesEditor();
+    }
+    function updatePhaseDays(idx, days) {
+        var d = parseInt(days) || 1;
+        tempPhases[idx].days = Math.max(1, Math.min(30, d));
+        renderPhasesEditor();
+    }
+
+    function renderPhasesEditor() {
+        var container = document.getElementById('shiftPhases');
+        var typeColors = { work: '#2e7d32', night: '#60a5fa', rest: '#b39ddb' };
+        var html = '';
+        tempPhases.forEach(function(phase, idx) {
+            html += '<div class="phase-row">' +
+                '<div class="flex gap-1 flex-shrink-0">' +
+                '<button onclick="updatePhaseType(' + idx + ',\'work\')" class="shift-type-btn ' + (phase.type==='work'?'active-day':'') + '">☀️白</button>' +
+                '<button onclick="updatePhaseType(' + idx + ',\'night\')" class="shift-type-btn ' + (phase.type==='night'?'active-night':'') + '">🌙夜</button>' +
+                '<button onclick="updatePhaseType(' + idx + ',\'rest\')" class="shift-type-btn ' + (phase.type==='rest'?'active-rest':'') + '">🏠休</button>' +
+                '</div>' +
+                '<input type="number" value="' + phase.days + '" min="1" max="30" onchange="updatePhaseDays(' + idx + ', this.value)" class="phase-days-input" style="border-color:' + typeColors[phase.type] + '">' +
+                '<span class="text-xs c-gray400 flex-shrink-0">天</span>' +
+                '<button onclick="removePhase(' + idx + ')" class="phase-remove-btn">✕</button>' +
+                '</div>';
+        });
+        container.innerHTML = html;
+
+        // Preview
+        var preview = document.getElementById('shiftPreview');
+        var previewHtml = '';
+        tempPhases.forEach(function(phase) {
+            var cls = phase.type === 'work' ? 'seq-day' : phase.type === 'night' ? 'seq-night' : 'seq-rest';
+            var label = phase.type === 'work' ? '白' : phase.type === 'night' ? '夜' : '休';
+            for (var i = 0; i < phase.days; i++) {
+                previewHtml += '<span class="shift-seq-item ' + cls + '">' + label + '</span>';
+            }
+        });
+        preview.innerHTML = previewHtml;
+    }
+
+    function saveSettings() {
+        if (!tempPhases || tempPhases.length === 0) { alert('请至少添加一个排班阶段'); return; }
+        var startDate = document.getElementById('shiftStartDate').value;
+        if (!startDate) { alert('请选择起始日期'); return; }
+        for (var i = 0; i < tempPhases.length; i++) {
+            if (!tempPhases[i].days || tempPhases[i].days < 1) { alert('每个阶段天数至少为1'); return; }
+        }
+        state.shiftPhases = tempPhases;
+        state.shiftStartDate = startDate;
+        saveState(); closeSettings(); render();
+    }
+
+    function resetShift() {
+        if (!confirm('确定要重置排班设置吗？')) return;
+        state.shiftPhases = null; state.shiftStartDate = null;
+        saveState(); closeSettings(); render();
+    }
+
+    // ============ Note Modal ============
+    var currentNoteDate = null;
+
+    function openNoteModal(dateStr) {
+        document.getElementById('noteModal').classList.add('active');
+        if (dateStr) {
+            currentNoteDate = dateStr;
+            document.getElementById('noteDate').value = dateStr;
+            var note = state.notes[dateStr];
+            if (note) {
+                document.getElementById('noteContent').value = note.content;
+                document.getElementById('noteModalTitle').textContent = '📝 编辑事项';
+                document.getElementById('deleteNoteBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('noteContent').value = '';
+                document.getElementById('noteModalTitle').textContent = '📝 添加事项';
+                document.getElementById('deleteNoteBtn').classList.add('hidden');
+            }
+        } else {
+            currentNoteDate = null;
+            document.getElementById('noteDate').value = formatDateStr(new Date());
+            document.getElementById('noteContent').value = '';
+            document.getElementById('noteModalTitle').textContent = '📝 添加事项';
+            document.getElementById('deleteNoteBtn').classList.add('hidden');
+        }
+    }
+    function closeNoteModal() {
+        document.getElementById('noteModal').classList.remove('active');
+        currentNoteDate = null;
+    }
+    function onDayClick(dateStr) { openNoteModal(dateStr); }
+
+    function saveNote() {
+        var dateStr = document.getElementById('noteDate').value;
+        var content = document.getElementById('noteContent').value.trim();
+        if (!dateStr) { alert('请选择日期'); return; }
+        if (!content) { alert('请输入事项内容'); return; }
+        if (!state.notes[dateStr]) state.notes[dateStr] = {};
+        state.notes[dateStr].content = content;
+        saveState(); closeNoteModal(); render();
+    }
+
+    function deleteNote() {
+        var dateStr = document.getElementById('noteDate').value;
+        if (!dateStr || !state.notes[dateStr]) return;
+        if (!confirm('确定删除该事项？')) return;
+        delete state.notes[dateStr];
+        saveState(); closeNoteModal(); render();
+    }
+
+    // ============ Init ============
+    function init() {
+        loadState();
+        // 如果没有排班数据，自动加载唐郗的排班表
+        if (!state.scheduleData) {
+            state.scheduleData = defaultScheduleData;
+            saveState();
+        }
+        render();
+
+        document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('active');
+            });
+        });
+    }
+
+    init();
+    </script>
+</body>
+</html>
