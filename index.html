@@ -201,6 +201,91 @@
             position: absolute; bottom: 3px;
         }
         .note-dot-work { background: #2e7d32; }
+        .day-popup-content {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            width: calc(100% - 48px);
+            max-width: 340px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: popupFadeIn 0.25s ease;
+            margin: auto 0;
+        }
+        #dayPopup { align-items: center; }
+        @keyframes popupFadeIn {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .day-popup-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .day-popup-label {
+            font-size: 13px;
+            color: #9ca3af;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .day-popup-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .day-shift-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 8px;
+            border-radius: 14px;
+            border: 2px solid #e5e7eb;
+            background: #f9fafb;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .day-shift-btn:active { transform: scale(0.95); }
+        .day-shift-icon { font-size: 24px; }
+        .day-shift-work.active {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-color: #66bb6a;
+            color: #2e7d32;
+        }
+        .day-shift-night.active {
+            background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+            border-color: #60a5fa;
+            color: #1e40af;
+        }
+        .day-shift-rest.active {
+            background: linear-gradient(135deg, #e0d4f5, #d1c4e9);
+            border-color: #b39ddb;
+            color: #5b4a73;
+        }
+        .day-popup-divider {
+            height: 1px;
+            background: #f3f4f6;
+            margin: 16px 0;
+        }
+
+        .day-note-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1.5px dashed #d1d5db;
+            background: #f9fafb;
+            font-size: 14px;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .day-note-btn:active { background: #f3f4f6; }
+
         .note-dot-night { background: #60a5fa; }
         .note-dot-rest { background: #b39ddb; }
 
@@ -258,6 +343,13 @@
             padding: 4px 12px; background: #eff6ff;
             border: none; border-radius: 8px; cursor: pointer;
         }
+        .btn-outline-full {
+            width: 100%; padding: 12px; border-radius: 12px;
+            border: 1.5px dashed #d1d5db; background: #f9fafb;
+            font-size: 14px; color: #6b7280; cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-outline-full:active { background: #f3f4f6; }
         .preset-btn {
             padding: 8px 14px; background: #f0f4f8;
             border: 1.5px solid #e2e8f0; border-radius: 10px;
@@ -535,8 +627,12 @@
     <div class="section-card text-center py-8" id="emptyState">
         <div class="text-5xl mb-3">📅</div>
         <h3 class="font-bold c-gray700 mb-2">开始设置您的排班</h3>
-        <p class="text-sm c-gray400 mb-5 px-4">设置排班模式后，日历将自动标记上班和休息日</p>
-        <button class="btn-primary" style="width:auto; padding:12px 32px;" onclick="openSettings()">⚙️ 设置排班模式</button>
+        <p class="text-sm c-gray400 mb-5 px-4">选择以下方式设置排班</p>
+        <div class="flex flex-col gap-3 px-6">
+            <button class="btn-primary" style="width:auto; padding:12px 32px;" onclick="openSettings()">⚙️ 设置排班模式</button>
+            <button class="btn-outline-full" onclick="loadDefaultSchedule()">📋 加载唐郗9月排班表</button>
+            <p class="text-xs c-gray400 mt-2">💡 也可以直接点击日历上的日期设置班次</p>
+        </div>
     </div>
 
     <!-- Settings Modal -->
@@ -586,10 +682,40 @@
                 <p><strong>💡 提示：</strong>对照上传的排班表，设置好班次周期和起始日期，系统会自动计算每天的班次。</p>
             </div>
 
+            <div class="mb-4">
+                <button class="btn-outline-full" onclick="loadDefaultSchedule()">📋 加载唐郗9月排班表</button>
+            </div>
+
             <div class="flex gap-2">
-                <button class="btn-danger flex-shrink-0" onclick="resetShift()">重置</button>
+                <button class="btn-danger flex-shrink-0" onclick="resetShift()">重置全部</button>
                 <button class="btn-primary flex-1" onclick="saveSettings()">保存设置</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Day Action Popup -->
+    <div class="modal-overlay" id="dayPopup">
+        <div class="day-popup-content">
+            <div class="day-popup-header" id="dayPopupTitle">9月8日 周日</div>
+            <div class="day-popup-label">选择班次</div>
+            <div class="day-popup-btns">
+                <button class="day-shift-btn day-shift-work" id="dayBtnWork" onclick="setDayShift('work')">
+                    <span class="day-shift-icon">☀️</span>
+                    <span>白班</span>
+                </button>
+                <button class="day-shift-btn day-shift-night" id="dayBtnNight" onclick="setDayShift('night')">
+                    <span class="day-shift-icon">🌙</span>
+                    <span>夜班</span>
+                </button>
+                <button class="day-shift-btn day-shift-rest" id="dayBtnRest" onclick="setDayShift('rest')">
+                    <span class="day-shift-icon">🏖️</span>
+                    <span>休息</span>
+                </button>
+            </div>
+            <div class="day-popup-divider"></div>
+            <button class="day-note-btn" onclick="openNoteFromDay()">
+                📝 记录事项
+            </button>
         </div>
     </div>
 
@@ -798,8 +924,10 @@
         var patternEl = document.getElementById('shiftPatternDisplay');
         patternEl.textContent = getPatternDescription();
 
-        if (!state.shiftPhases) {
-            el.innerHTML = '<div class="c-gray400 text-sm py-2">请先设置排班模式以查看上班状态</div>';
+        // 检查是否有排班数据（模式或逐日）
+        var hasSchedule = state.shiftPhases || (state.scheduleData && state.scheduleData.days && Object.keys(state.scheduleData.days).length > 0);
+        if (!hasSchedule) {
+            el.innerHTML = '<div class="c-gray400 text-sm py-2">点击日历上的日期设置班次</div>';
             return;
         }
 
@@ -884,7 +1012,7 @@
                 dot = '<span class="note-dot ' + dotCls + '"></span>';
             }
 
-            html += '<div class="' + cls + '" onclick="onDayClick(\'' + dateStr + '\')">' +
+            html += '<div class="' + cls + '" onclick="toggleShift(\'' + dateStr + '\')">' +
                 '<span class="text-sm leading-none">' + d + '</span>' +
                 badge + dot + '</div>';
         }
@@ -953,12 +1081,17 @@
 
     function renderEmptyState() {
         var el = document.getElementById('emptyState');
-        if (state.shiftPhases) el.classList.add('hidden');
+        if (state.shiftPhases || state.scheduleData) el.classList.add('hidden');
         else el.classList.remove('hidden');
     }
 
     function updateLegend() {
-        var hasNight = state.shiftPhases && state.shiftPhases.some(function(p) { return p.type === 'night'; });
+        var hasNight = false;
+        if (state.shiftPhases && state.shiftPhases.some(function(p) { return p.type === 'night'; })) hasNight = true;
+        if (state.scheduleData && state.scheduleData.days) {
+            var dayVals = Object.values(state.scheduleData.days);
+            if (dayVals.indexOf('night') !== -1) hasNight = true;
+        }
         var el = document.getElementById('legendNightWrap');
         if (hasNight) el.classList.remove('hidden');
         else el.classList.add('hidden');
@@ -1107,13 +1240,25 @@
         }
         state.shiftPhases = tempPhases;
         state.shiftStartDate = startDate;
+        // 清除逐日排班数据，让模式生效
+        state.scheduleData = null;
         saveState(); closeSettings(); render();
     }
 
     function resetShift() {
-        if (!confirm('确定要重置排班设置吗？')) return;
+        if (!confirm('确定要重置所有排班设置吗？（包括排班模式和逐日排班数据）')) return;
         state.shiftPhases = null; state.shiftStartDate = null;
+        state.scheduleData = null;
         saveState(); closeSettings(); render();
+    }
+
+    function loadDefaultSchedule() {
+        if (!confirm('确定要加载唐郗9月排班表吗？（这会覆盖当前的排班数据）')) return;
+        state.scheduleData = JSON.parse(JSON.stringify(defaultScheduleData));
+        state.shiftPhases = null;
+        state.shiftStartDate = null;
+        saveState(); closeSettings(); render();
+        alert('已加载唐郗9月排班表！');
     }
 
     // ============ Note Modal ============
@@ -1148,6 +1293,51 @@
     }
     function onDayClick(dateStr) { openNoteModal(dateStr); }
 
+    // ============ Day Action Popup ============
+    var currentDayPopupDate = null;
+
+    function toggleShift(dateStr) {
+        currentDayPopupDate = dateStr;
+        var d = new Date(dateStr + 'T00:00:00');
+        var weekDays = ['周日','周一','周二','周三','周四','周五','周六'];
+        var title = (d.getMonth()+1) + '月' + d.getDate() + '日 ' + weekDays[d.getDay()];
+        document.getElementById('dayPopupTitle').textContent = title;
+
+        var status = getDayStatus(dateStr);
+        document.getElementById('dayBtnWork').classList.toggle('active', status === 'work');
+        document.getElementById('dayBtnNight').classList.toggle('active', status === 'night');
+        document.getElementById('dayBtnRest').classList.toggle('active', status === 'rest');
+
+        document.getElementById('dayPopup').classList.add('active');
+    }
+
+    function setDayShift(type) {
+        if (!currentDayPopupDate) return;
+        if (!state.scheduleData) {
+            state.scheduleData = { name: '唐郗', department: '女病区', days: {} };
+        }
+        if (!state.scheduleData.days) {
+            state.scheduleData.days = {};
+        }
+        state.scheduleData.days[currentDayPopupDate] = type;
+        // 清除模式排班，让逐日数据生效
+        state.shiftPhases = null;
+        state.shiftStartDate = null;
+        saveState();
+        render();
+        // Update popup highlight
+        document.getElementById('dayBtnWork').classList.toggle('active', type === 'work');
+        document.getElementById('dayBtnNight').classList.toggle('active', type === 'night');
+        document.getElementById('dayBtnRest').classList.toggle('active', type === 'rest');
+    }
+
+    function openNoteFromDay() {
+        document.getElementById('dayPopup').classList.remove('active');
+        if (currentDayPopupDate) {
+            openNoteModal(currentDayPopupDate);
+        }
+    }
+
     function saveNote() {
         var dateStr = document.getElementById('noteDate').value;
         var content = document.getElementById('noteContent').value.trim();
@@ -1169,11 +1359,7 @@
     // ============ Init ============
     function init() {
         loadState();
-        // 如果没有排班数据，自动加载唐郗的排班表
-        if (!state.scheduleData) {
-            state.scheduleData = defaultScheduleData;
-            saveState();
-        }
+        // 不再自动加载默认排班表，让用户自己设置
         render();
 
         document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
